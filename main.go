@@ -60,8 +60,7 @@ func main() {
 
 		for _, event := range events {
 			if event.Type == linebot.EventTypeMessage {
-				message := event.Message.(type)
-				switch message {
+				switch event.Message.(type) {
 				case *linebot.TextMessage:
 					message_d := event.Message.(*linebot.TextMessage)
 					text := message_d.Text
