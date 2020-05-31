@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/csv"
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -97,7 +96,7 @@ func judge_word(text string, weekdays map[string]int) int {
 		weekday_data := weekdays[weekday]
 		return weekday_data
 	}
-	week_data := weekdays[text] - 1
+	weekday_data := weekdays[text] - 1
 	return weekday_data
 }
 
