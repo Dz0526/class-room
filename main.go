@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
 	"log"
 	"os"
@@ -52,52 +53,50 @@ func main() {
 
 	router := gin.Default()
 
-	router.POST("/post", class_schedule)
-	router.Run(":" + os.Getenv("PORT"))
+	router.POST("/post", func(c *gin.Context) {
+		events, err := bot.ParseRequest(req)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-}
+		for _, event := range events {
+			if event.Type == linebot.EventTypeMessage {
+				switch message := event.Message.(type) {
+				case *linebot.TexstMessage:
+					message_d := event.Message.(*linebot.TextMessage)
+					text := message_d.Text
+					// judge text
+					judge := match_text(text, match_judge)
+					if judge {
+						if text == "明日" {
+							t := time.Now()
+							weekday := t.Weekday()
+							// get number by using weekday
+							weekday_data := weekdays[weekday]
 
-func class_schedule(c *gin.Context) {
-	events, err := bot.ParseRequest(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, event := range events {
-		if event.Type == linebot.EventTypeMessage {
-			switch message := event.Message.(type) {
-			case *linebot.TexstMessage:
-				message_d := event.Message.(*linebot.TextMessage)
-				text := message_d.Text
-				// judge text
-				judge := match_text(text, match_judge)
-				if judge {
-					if text == "明日" {
-						t := time.Now()
-						weekday := t.Weekday()
-						// get number by using weekday
-						weekday_data := weekdays[weekday]
-
+						} else {
+							// get number by using text
+							weekday_data := weekdays[text] - 1
+						}
+						// get class by using csv data
+						class_room := record[weekday_data][1]
+						// space to \n
+						format_class := strings.Replace(class_room, " ", "\n", -1)
+						if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(format_class)).Do; err != nil {
+							log.Fatal(err)
+						}
 					} else {
-						// get number by using text
-						weekday_data := weekdays[text] - 1
+						if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage("Nothing")).Do; err != nil {
+							log.Fatal(err)
+						}
 					}
-					// get class by using csv data
-					class_room := record[weekday_data][1]
-					// space to \n
-					format_class := strings.Replace(class_room, " ", "\n", -1)
-					if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(format_class)).Do; err != nil {
-						log.Fatal(err)
-					}
-				} else {
-					if _, err = bot.ReplyMessage(event.ReplyToken, linebot.NewTextMessage("Nothing")).Do; err != nil {
-						log.Fatal(err)
-					}
-				}
 
+				}
 			}
 		}
-	}
+	})
+	router.Run(":" + port)
+
 }
 
 func match_text(s string, lis [8]string) bool {
