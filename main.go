@@ -95,6 +95,8 @@ func judge_word(text string, weekdays map[string]int) int {
 		//get number by using weekday
 		weekday_data := weekdays[weekday]
 		return weekday_data
+	} else if text == "Sunday" {
+		weekday_data := 6
 	}
 	weekday_data := weekdays[text] - 1
 	return weekday_data
